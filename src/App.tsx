@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { DragDropContext, Draggable, Droppable, DropResult } from 'react-beautiful-dnd';
+import { DragDropContext, Draggable, Droppable, DroppableStateSnapshot, DropResult } from 'react-beautiful-dnd';
 
 const initList = [
   {
@@ -32,12 +32,24 @@ const getItemStyle = (isDragging: boolean, draggableStyle: any) => ({
   ...draggableStyle,
 })
 
+const getBackgroundColor = (snapshot: DroppableStateSnapshot): string => {
+  // Giving isDraggingOver preference
+  if (snapshot.isDraggingOver) {
+    return 'pink';
+  }
+  // If it is the home list but not dragging over
+  if (snapshot.draggingFromThisWith) {
+    return 'blue';
+  }
+  // Otherwise use our default background
+  return 'white';
+};
+
 function App() {
   const [todos, setTodos] = useState(initList);
 
   const onDragEnd = (result: DropResult) => {
     const { source, destination } = result;
-    console.log('result', result)
     if (!destination) return
 
     const tempList = Array.from(todos);
@@ -46,6 +58,7 @@ function App() {
 
     setTodos(tempList)
   }
+
   return (
     <div className="App">
       <h1>
@@ -53,9 +66,8 @@ function App() {
       </h1>
       <DragDropContext onDragEnd={onDragEnd}>
         <Droppable droppableId='todo'>
-          {(provided) => {
-            console.log('provided', provided)
-            return <div className='todo' {...provided.droppableProps} ref={provided.innerRef}>
+          {(provided, droppableSnapshot) => {
+            return <div className='todo' {...provided.droppableProps} ref={provided.innerRef} style={{ backgroundColor: getBackgroundColor(droppableSnapshot) }}>
               {todos.map((todo, index) => {
                 const { id, task } = todo;
                 return (
@@ -73,6 +85,7 @@ function App() {
                   </Draggable>
                 )
               })}
+              {provided.placeholder}
             </div>
           }}
         </Droppable>
